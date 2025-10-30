@@ -146,8 +146,8 @@ GameBoard *gameBoardNew()
 
 void gameBoardDelete(GameBoard *board)
 {
-    // TODO: Liberar toda la memoria dinámica. NO SABEMOS COMO HACERLO !!!
-    // TODO: Recorrer cada GardenRow. 
+    // TODO: Liberar toda la memoria dinámica.
+    // TODO: Recorrer cada GardenRow.
     for (int i = 0; i < GRID_ROWS; i++)
     {
         RowSegment *segmento = &board->rows[i].first_segment;
@@ -179,23 +179,83 @@ void gameBoardDelete(GameBoard *board)
 int gameBoardAddPlant(GameBoard *board, int row, int col)
 {
     // TODO: Encontrar la GardenRow correcta.
-    RowSegment *segmento = &board->rows[row].first_segment;
+    RowSegment *segmento = board->rows[row].first_segment;
+
     // TODO: Recorrer la lista de RowSegment hasta encontrar el segmento VACIO que contenga a `col`.
     while (segmento)
     {
         RowSegment *proximo = segmento->next;
-        if (segmento->start_col <= col && (segmento->start_col + segmento->length) > col && segmento->status == STATUS_VACIO) {
+        if (segmento->start_col <= col && (segmento->start_col + segmento->length) > col && segmento->status == STATUS_VACIO)
+        {
             // TODO: Si se encuentra y tiene espacio, realizar la lógica de DIVISIÓN de segmento.
-            segmento->length = col - segmento->length;
-            RowSegment *nuevo_segmento = (RowSegment*) malloc(sizeof(RowSegment));
-            segmento->next = nuevo_segmento;
-            nuevo_segmento->status = STATUS_PLANTA;
-            nuevo_segmento->start_col = col;
-            nuevo_segmento->length = 1;
-            nuevo_segmento->next FALTA ESTO -------------------------------------------------------------------------------------
+
             // TODO: Crear la nueva `Planta` con memoria dinámica y asignarla al `planta_data` del nuevo segmento.
-            Planta *nueva_planta = (Planta*) malloc(sizeof(Planta));
-            nuevo_segmento->planta_data = nueva_planta;
+            Planta *p = (Planta *)malloc(sizeof(Planta));
+            p->rect.x = GRID_OFFSET_X + (cursor.col * CELL_WIDTH);
+            p->rect.y = GRID_OFFSET_Y + (cursor.row * CELL_HEIGHT);
+            p->rect.w = CELL_WIDTH;
+            p->rect.h = CELL_HEIGHT;
+            p->activo = 1;
+            p->cooldown = rand() % 100;
+            p->current_frame = 0;
+            p->frame_timer = 0;
+            p->debe_disparar = 0;
+
+            int longitud = segmento->length;
+
+            // Si col es la ultima columna del segmento
+            if (segmento->start_col + segmento->length - 1 == col)
+            {
+                RowSegment *planta_segmento = (RowSegment *)malloc(sizeof(RowSegment));
+                planta_segmento->status = STATUS_PLANTA;
+                planta_segmento->start_col = col;
+                planta_segmento->length = 1;
+                planta_segmento->planta_data = p;
+
+                // enlazamos los nuevos segmentos
+                segmento->next = planta_segmento;
+                planta_segmento->next = proximo;
+            }
+            // si col esta en el principio del segmento
+            else if (col == segmento->start_col)
+            {
+                segmento->status = STATUS_PLANTA;
+                segmento->length = 1;
+                segmento->planta_data = p;
+
+                RowSegment *nuevo_vacio = (RowSegment *)malloc(sizeof(RowSegment));
+                nuevo_vacio->status = STATUS_VACIO;
+                nuevo_vacio->start_col = col + 1;
+                nuevo_vacio->length = longitud - 1;
+                nuevo_vacio->planta_data = NULL;
+
+                // enlazamos los nuevos segmentos
+                segmento->next = nuevo_vacio;
+                nuevo_vacio->next = proximo;
+            }
+            // Si col esta en el medio
+            else
+            {
+                RowSegment *planta_segmento = (RowSegment *)malloc(sizeof(RowSegment));
+                planta_segmento->status = STATUS_PLANTA;
+                planta_segmento->start_col = col;
+                planta_segmento->length = 1;
+                planta_segmento->planta_data = p;
+
+                segmento->length = col - segmento->start_col;
+
+                RowSegment *nuevo_vacio = (RowSegment *)malloc(sizeof(RowSegment));
+                nuevo_vacio->status = STATUS_VACIO;
+                nuevo_vacio->start_col = col + 1;
+                nuevo_vacio->length = longitud - segmento->length - 1;
+                nuevo_vacio->planta_data = NULL;
+
+                // enlazamos los nuevos segmentos
+                segmento->next = planta_segmento;
+                planta_segmento->next = nuevo_vacio;
+                nuevo_vacio->next = proximo;
+            }
+            return 0;
         }
         segmento = proximo;
     }
