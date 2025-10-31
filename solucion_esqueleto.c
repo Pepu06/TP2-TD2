@@ -266,7 +266,48 @@ int gameBoardAddPlant(GameBoard *board, int row, int col)
 void gameBoardRemovePlant(GameBoard *board, int row, int col)
 {
     // TODO: Similar a AddPlant, encontrar el segmento que contiene `col`.
-    // TODO: Si es un segmento de tipo PLANTA, convertirlo a VACIO y liberar el `planta_data`.
+    RowSegment *segmento = board->rows[row].first_segment;
+    RowSegment *prev = NULL;
+
+    // TODO: Recorrer los segmentos hasta encontrar el que contiene la planta a eliminar.
+    while (segmento)
+    {
+        RowSegment *proximo = segmento->next;
+
+        // TODO: Si es un segmento de tipo PLANTA que contiene `col`, eliminarlo.
+        if (segmento->start_col <= col && col < segmento->start_col + segmento->length && segmento->status == STATUS_PLANTA)
+        {
+            // Se libera la planta y se asigna el status vaico
+            free(segmento->planta_data);
+            segmento->planta_data = NULL;
+            segmento->status = STATUS_VACIO;
+
+            // Ifs para chequear si debe fusionarse con el segmento anterior, con el siguiente o ambos
+            if (prev && prev->status == STATUS_VACIO)
+            {
+                // Fusionar con el segmento anterior vacío
+                prev->length =  prev->length + segmento->length;
+                prev->next = segmento->next;
+                free(segmento);
+                segmento = prev;
+            }
+
+            if (segmento->next && segmento->next->status == STATUS_VACIO)
+            {
+                // Fusionar con el segmento siguiente vacío
+                RowSegment *sig = segmento->next;
+                segmento->length = segmento->length + sig->length;
+                segmento->next = sig->next;
+                free(sig);
+            }
+
+            return;
+        }
+
+        prev = segmento;
+        segmento = proximo;
+    }
+
     // TODO: Implementar la lógica de FUSIÓN con los segmentos vecinos si también son VACIO.
     printf("Función gameBoardRemovePlant no implementada.\n");
 }
