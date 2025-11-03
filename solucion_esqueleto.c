@@ -519,16 +519,16 @@ char *strConcatenate(char *src1, char *src2)
     {
         largo2++;
     }
-    char *ret = (char *)malloc(sizeof(char) * (largo1 + largo2) + 1);
+    char *ret = (char *)malloc(sizeof(char) * ((largo1 + largo2) + 1));
 
     int i = 0;
-    for (; i < largo1; i++)
+    for (i; i < largo1; i++)
     {
         ret[i] = src1[i];
     }
     for (int j = 0; j < largo2; j++)
     {
-        ret[i + j] = src2[j];
+        ret[largo1 + j] = src2[j];
     }
     ret[largo1 + largo2] = '\0';
     free(src1);
