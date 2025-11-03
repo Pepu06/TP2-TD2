@@ -275,7 +275,7 @@ void gameBoardRemovePlant(GameBoard *board, int row, int col)
         RowSegment *proximo = segmento->next;
 
         // TODO: Si es un segmento de tipo PLANTA que contiene `col`, eliminarlo.
-        if (segmento->start_col <= col && col < segmento->start_col + segmento->length && segmento->status == STATUS_PLANTA)
+        if (segmento->start_col <= col && col < (segmento->start_col + segmento->length) && segmento->status == STATUS_PLANTA)
         {
             // Se libera la planta y se asigna el status vaico
             free(segmento->planta_data);
@@ -286,19 +286,19 @@ void gameBoardRemovePlant(GameBoard *board, int row, int col)
             if (prev && prev->status == STATUS_VACIO)
             {
                 // Fusionar con el segmento anterior vacío
-                prev->length =  prev->length + segmento->length;
+                prev->length = prev->length + segmento->length;
                 prev->next = segmento->next;
                 free(segmento);
                 segmento = prev;
             }
 
-            if (segmento->next && segmento->next->status == STATUS_VACIO)
+            if (proximo && proximo->status == STATUS_VACIO)
             {
                 // Fusionar con el segmento siguiente vacío
-                RowSegment *sig = segmento->next;
-                segmento->length = segmento->length + sig->length;
-                segmento->next = sig->next;
-                free(sig);
+                segmento->length = segmento->length + proximo->length;
+                segmento->next = proximo->next;
+                free(proximo);
+                proximo = NULL;
             }
 
             return;
@@ -315,8 +315,29 @@ void gameBoardRemovePlant(GameBoard *board, int row, int col)
 void gameBoardAddZombie(GameBoard *board, int row)
 {
     // TODO: Crear un nuevo ZombieNode con memoria dinámica.
+    ZombieNode *nuevoZombieNode = (ZombieNode *)malloc(sizeof(ZombieNode));
+
     // TODO: Inicializar sus datos (posición, vida, animación, etc.).
+    // creo un nuevo zombie
+    Zombie *z = (Zombie *)malloc(sizeof(Zombie));
+    z->row = rand() % GRID_ROWS;
+    z->pos_x = SCREEN_WIDTH;
+    z->rect.x = (int)z->pos_x;
+    z->rect.y = GRID_OFFSET_Y + (z->row * CELL_HEIGHT);
+    z->rect.w = CELL_WIDTH;
+    z->rect.h = CELL_HEIGHT;
+    z->vida = 100;
+    z->activo = 1;
+    z->current_frame = 0;
+    z->frame_timer = 0;
+
+    // lo asigno al zombienode
+    nuevoZombieNode->zombie_data = z;
+
     // TODO: Agregarlo a la lista enlazada simple de la GardenRow correspondiente.
+    //hago que el next del nuevo zombienode sea el primero de la lista y luego pongo al nuevo primero
+    nuevoZombieNode->next = board->rows[row].first_zombie;
+    board->rows[row].first_zombie = nuevoZombieNode;
     printf("Función gameBoardAddZombie no implementada.\n");
 }
 
