@@ -335,7 +335,7 @@ void gameBoardAddZombie(GameBoard *board, int row)
     nuevoZombieNode->zombie_data = z;
 
     // TODO: Agregarlo a la lista enlazada simple de la GardenRow correspondiente.
-    //hago que el next del nuevo zombienode sea el primero de la lista y luego pongo al nuevo primero
+    // hago que el next del nuevo zombienode sea el primero de la lista y luego pongo al nuevo primero
     nuevoZombieNode->next = board->rows[row].first_zombie;
     board->rows[row].first_zombie = nuevoZombieNode;
     printf("Función gameBoardAddZombie no implementada.\n");
@@ -347,8 +347,71 @@ void gameBoardUpdate(GameBoard *board)
         return;
     // TODO: Re-implementar la lógica de `actualizarEstado` usando las nuevas estructuras.
     // TODO: Recorrer las listas de zombies de cada fila para moverlos y animarlos.
+    for (int i = 0; i < GRID_ROWS; i++)
+    {
+        ZombieNode *zombie = board->rows[i].first_zombie;
+        // recorro todos los zombies de la fila y actualizo el estado de cada uno
+        while (zombie)
+        {
+            if (!zombies[i].activo)
+            {
+                Zombie *z = &zombies[i];
+                z->row = rand() % GRID_ROWS;
+                z->pos_x = SCREEN_WIDTH;
+                z->rect.x = (int)z->pos_x;
+                z->rect.y = GRID_OFFSET_Y + (z->row * CELL_HEIGHT);
+                z->rect.w = CELL_WIDTH;
+                z->rect.h = CELL_HEIGHT;
+                z->vida = 100;
+                z->activo = 1;
+                z->current_frame = 0;
+                z->frame_timer = 0;
+                break;
+            }
+            zombie = zombie->next;
+        }
+    }
     // TODO: Recorrer las listas de segmentos de cada fila para gestionar los cooldowns y animaciones de las plantas.
+    for (int i = 0; i < GRID_ROWS; i++)
+    {
+        RowSegment *segmento = &board->rows[i].first_segment;
+        //recorro todos los segmentos
+        while (segmento)
+        {
+            //chequeo si el segmento tiene una planta activa y actualizo su estado
+            if (segmento->status == STATUS_PLANTA)
+            {
+                if (segmento->planta_data->activo)
+                {
+                    Planta *p = &grid[r][c];
+                    if (p->cooldown <= 0)
+                    {
+                        p->debe_disparar = 1;
+                    }
+                    else
+                    {
+                        p->cooldown--;
+                    }
+                    p->frame_timer++;
+                    if (p->frame_timer >= PEASHOOTER_ANIMATION_SPEED)
+                    {
+                        p->frame_timer = 0;
+                        p->current_frame = (p->current_frame + 1) % PEASHOOTER_TOTAL_FRAMES;
+                        if (p->debe_disparar && p->current_frame == PEASHOOTER_SHOOT_FRAME)
+                        {
+                            dispararArveja(r, c);
+                            p->cooldown = 120;
+                            p->debe_disparar = 0;
+                        }
+                    }
+                    segmento->planta_data = p;
+                }
+            }
+            segmento = segmento->next;
+        }
+    }
     // TODO: Actualizar la lógica de disparo, colisiones y spawn de zombies.
+    
 }
 
 void gameBoardDraw(GameBoard *board)
@@ -469,30 +532,31 @@ char *strDuplicate(char *src)
 }
 
 // Compara dos strings lexicograficamente. Devuelve 0 si son iguales, 1 si el primer string es menor al segundo, -1 en otro caso.
-int strCompare(char *s1, char *s2){
+int strCompare(char *s1, char *s2)
+{
     int i = 0;
-    while(s1[i] != '\0' && s2[i]!='\0') //se fija letra por letra si hay alguna menor lexicograficamente antes de que se terminen los strings para devolver el valor correspondiente
+    while (s1[i] != '\0' && s2[i] != '\0') // se fija letra por letra si hay alguna menor lexicograficamente antes de que se terminen los strings para devolver el valor correspondiente
     {
-        if (s1[i] < s2[i]) 
+        if (s1[i] < s2[i])
         {
             return 1;
-        } 
-        else if (s1[i] > s2[i]) 
+        }
+        else if (s1[i] > s2[i])
         {
             return -1;
         }
         i++;
     }
     // si algun string termina antes de que haya diferencias se evaluan los posibles casos
-    if (s1[i] == '\0' && s2[i] == '\0') //si son iguales para devolver 0
+    if (s1[i] == '\0' && s2[i] == '\0') // si son iguales para devolver 0
     {
         return 0;
-    } 
-    else if (s1[i] == '\0') //si termino primero s1 para devolver 1
+    }
+    else if (s1[i] == '\0') // si termino primero s1 para devolver 1
     {
         return 1;
-    } 
-    else //si termino primero s2 para devolver -1
+    }
+    else // si termino primero s2 para devolver -1
     {
         return -1;
     }
