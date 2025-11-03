@@ -469,38 +469,30 @@ char *strDuplicate(char *src)
 }
 
 // Compara dos strings lexicograficamente. Devuelve 0 si son iguales, 1 si el primer string es menor al segundo, -1 en otro caso.
-int strCompare(char *s1, char *s2)
-{
-    int largo1 = 0;
-    for (int i = 0; s1[i] != '\0'; i++)
+int strCompare(char *s1, char *s2){
+    int i = 0;
+    while(s1[i] != '\0' && s2[i]!='\0') //se fija letra por letra si hay alguna menor lexicograficamente antes de que se terminen los strings para devolver el valor correspondiente
     {
-        largo1++;
+        if (s1[i] < s2[i]) 
+        {
+            return 1;
+        } 
+        else if (s1[i] > s2[i]) 
+        {
+            return -1;
+        }
+        i++;
     }
-    int largo2 = 0;
-    for (int i = 0; s2[i] != '\0'; i++)
+    // si algun string termina antes de que haya diferencias se evaluan los posibles casos
+    if (s1[i] == '\0' && s2[i] == '\0') //si son iguales para devolver 0
     {
-        largo2++;
-    }
-    if (largo1 < largo2)
+        return 0;
+    } 
+    else if (s1[i] == '\0') //si termino primero s1 para devolver 1
     {
         return 1;
-    }
-    else if (largo1 == largo2)
-    {
-        for (int i = 0; i < largo1; i++)
-        {
-            if (s1[i] != s2[i])
-            {
-                if (s1[i] < s2[i])
-                {
-                    return 1;
-                }
-                return -1;
-            }
-        }
-        return 0;
-    }
-    else
+    } 
+    else //si termino primero s2 para devolver -1
     {
         return -1;
     }
