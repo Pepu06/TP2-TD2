@@ -150,7 +150,7 @@ void gameBoardDelete(GameBoard *board)
     // TODO: Recorrer cada GardenRow.
     for (int i = 0; i < GRID_ROWS; i++)
     {
-        RowSegment *segmento = &board->rows[i].first_segment;
+        RowSegment *segmento = board->rows[i].first_segment;
         while (segmento)
         {
             // TODO: Liberar todos los RowSegment (y los planta_data si existen).
@@ -163,7 +163,7 @@ void gameBoardDelete(GameBoard *board)
             segmento = proximo;
         }
         // TODO: Liberar todos los ZombieNode.
-        ZombieNode *zombie = &board->rows[i].first_zombie;
+        ZombieNode *zombie = board->rows[i].first_zombie;
         while (zombie)
         {
             ZombieNode *proximo = zombie->next;
@@ -332,7 +332,7 @@ void gameBoardAddZombie(GameBoard *board, int row)
     z->frame_timer = 0;
 
     // lo asigno al zombienode
-    nuevoZombieNode->zombie_data = z;
+    nuevoZombieNode->zombie_data = *z;
 
     // TODO: Agregarlo a la lista enlazada simple de la GardenRow correspondiente.
     // hago que el next del nuevo zombienode sea el primero de la lista y luego pongo al nuevo primero
@@ -353,37 +353,40 @@ void gameBoardUpdate(GameBoard *board)
         // recorro todos los zombies de la fila y actualizo el estado de cada uno
         while (zombie)
         {
-            if (!zombies[i].activo)
+            if (!zombie->zombie_data.activo)
             {
-                Zombie *z = &zombies[i];
-                z->row = rand() % GRID_ROWS;
-                z->pos_x = SCREEN_WIDTH;
-                z->rect.x = (int)z->pos_x;
-                z->rect.y = GRID_OFFSET_Y + (z->row * CELL_HEIGHT);
-                z->rect.w = CELL_WIDTH;
-                z->rect.h = CELL_HEIGHT;
-                z->vida = 100;
-                z->activo = 1;
-                z->current_frame = 0;
-                z->frame_timer = 0;
-                break;
+                zombie = zombie->next;
+                continue;
             }
+
+            Zombie *z = &zombie->zombie_data;
+            z->row = rand() % GRID_ROWS;
+            z->pos_x = SCREEN_WIDTH;
+            z->rect.x = (int)z->pos_x;
+            z->rect.y = GRID_OFFSET_Y + (z->row * CELL_HEIGHT);
+            z->rect.w = CELL_WIDTH;
+            z->rect.h = CELL_HEIGHT;
+            z->vida = 100;
+            z->activo = 1;
+            z->current_frame = 0;
+            z->frame_timer = 0;
+
             zombie = zombie->next;
         }
     }
     // TODO: Recorrer las listas de segmentos de cada fila para gestionar los cooldowns y animaciones de las plantas.
     for (int i = 0; i < GRID_ROWS; i++)
     {
-        RowSegment *segmento = &board->rows[i].first_segment;
-        //recorro todos los segmentos
+        RowSegment *segmento = board->rows[i].first_segment;
+        // recorro todos los segmentos
         while (segmento)
         {
-            //chequeo si el segmento tiene una planta activa y actualizo su estado
+            // chequeo si el segmento tiene una planta activa y actualizo su estado
             if (segmento->status == STATUS_PLANTA)
             {
                 if (segmento->planta_data->activo)
                 {
-                    Planta *p = &grid[r][c];
+                    Planta *p = segmento->planta_data;
                     if (p->cooldown <= 0)
                     {
                         p->debe_disparar = 1;
@@ -411,7 +414,6 @@ void gameBoardUpdate(GameBoard *board)
         }
     }
     // TODO: Actualizar la lógica de disparo, colisiones y spawn de zombies.
-    
 }
 
 void gameBoardDraw(GameBoard *board)
@@ -423,9 +425,52 @@ void gameBoardDraw(GameBoard *board)
 
     // TODO: Re-implementar la lógica de `dibujar` usando las nuevas estructuras.
     // TODO: Recorrer las listas de segmentos para dibujar las plantas.
+    for (int i = 0; i < GRID_ROWS; i++)
+    {
+        RowSegment *segmento = board->rows[i].first_segment;
+        // recorro todos los segmentos
+        while (segmento)
+        {
+            // chequeo si el segmento tiene una planta activa y la dibujo
+            if (segmento->status == STATUS_PLANTA)
+            {
+                if (segmento->planta_data->activo)
+                {
+                    Planta *p = segmento->planta_data;
+                    SDL_Rect src_rect = {p->current_frame * PEASHOOTER_FRAME_WIDTH, 0, PEASHOOTER_FRAME_WIDTH, PEASHOOTER_FRAME_HEIGHT};
+                    SDL_RenderCopy(renderer, tex_peashooter_sheet, &src_rect, &p->rect);
+                }
+            }
+            segmento = segmento->next;
+        }
+    }
     // TODO: Recorrer las listas de zombies para dibujarlos.
+    for (int i = 0; i < GRID_ROWS; i++)
+    {
+        ZombieNode *zombie = board->rows[i].first_zombie;
+        // recorro todos los zombies de la fila y los dibujo
+        while (zombie)
+        {
+            if (zombie->zombie_data.activo)
+            {
+                Zombie *z = &zombie->zombie_data;
+                SDL_Rect src_rect = {z->current_frame * ZOMBIE_FRAME_WIDTH, 0, ZOMBIE_FRAME_WIDTH, ZOMBIE_FRAME_HEIGHT};
+                SDL_RenderCopy(renderer, tex_zombie_sheet, &src_rect, &z->rect);
+            }
+            zombie = zombie->next;
+        }
+    }
     // TODO: Dibujar las arvejas y el cursor.
-
+    for (int i = 0; i < MAX_ARVEJAS; i++)
+    {
+        if (board->arvejas[i].activo)
+        {
+            SDL_RenderCopy(renderer, tex_pea, NULL, &board->arvejas[i].rect);
+        }
+    }
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 200);
+    SDL_Rect cursor_rect = {GRID_OFFSET_X + cursor.col * CELL_WIDTH, GRID_OFFSET_Y + cursor.row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT};
+    SDL_RenderDrawRect(renderer, &cursor_rect);
     SDL_RenderPresent(renderer);
 }
 
@@ -578,7 +623,7 @@ char *strConcatenate(char *src1, char *src2)
     char *ret = (char *)malloc(sizeof(char) * ((largo1 + largo2) + 1));
 
     int i = 0;
-    for (i; i < largo1; i++)
+    for (; i < largo1; i++)
     {
         ret[i] = src1[i];
     }
