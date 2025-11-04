@@ -402,7 +402,8 @@ void gameBoardUpdate(GameBoard *board)
                         p->current_frame = (p->current_frame + 1) % PEASHOOTER_TOTAL_FRAMES;
                         if (p->debe_disparar && p->current_frame == PEASHOOTER_SHOOT_FRAME)
                         {
-                            dispararArveja(r, c);
+                            // disparar arveja
+                            
                             p->cooldown = 120;
                             p->debe_disparar = 0;
                         }
