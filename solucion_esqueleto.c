@@ -403,7 +403,7 @@ void gameBoardUpdate(GameBoard *board)
                         if (p->debe_disparar && p->current_frame == PEASHOOTER_SHOOT_FRAME)
                         {
                             // disparar arveja
-                            
+
                             p->cooldown = 120;
                             p->debe_disparar = 0;
                         }
@@ -556,8 +556,14 @@ int main(int argc, char *args[])
 
     gameBoardDelete(game_board);
     cerrar();
+
+    casos_test();
     return 0;
 }
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 // Duplica un string. Debe contar la cantidad de caracteres totales de src y solicitar la memoria equivalente. Luego, debe copiar todos los caracteres a esta nueva ´area de memoria. Adem´as, como valor de retorno se debe retornar el puntero al nuevo string.
 char *strDuplicate(char *src)
@@ -636,4 +642,28 @@ char *strConcatenate(char *src1, char *src2)
     free(src1);
     free(src2);
     return ret;
+}
+
+int casos_test()
+{
+    printf("Duplicate vacío: '%s'\n", strDuplicate(""));
+    printf("Duplicate A: '%s'\n", strDuplicate("A"));
+    printf("Duplicate largo: '%s'\n", strDuplicate("ZXCVBNMASDFGHJKLQWERTYUIOPzxcvbnmasdfghjklqwertyuiop123456789"));
+
+    printf("Compare iguales: %d\n", strCompare("AAAA", "AAAA"));
+    printf("Compare vacíos: %d\n", strCompare("", ""));
+    printf("Compare dos de un solo caracter: %d\n", strCompare("A", "B"));
+    printf("Compare dos de un solo caracter: %d\n", strCompare("B", "A"));
+    printf("Compare iguales hasta un caracter: %d\n", strCompare("Pedro", "Pedra"));
+    printf("Compare iguales hasta un caracter: %d\n", strCompare("Pedra", "Pedro"));
+    printf("Compare strings diferentes: %d\n", strCompare("Bautista", "Loisi"));
+    printf("Compare strings diferentes: %d\n", strCompare("Loisi", "Bautista"));
+
+    printf("Concat vacio y un string de 3 caracteres: '%s'\n", strConcatenate(strDuplicate(""), strDuplicate("ANA")));
+    printf("Concat 3 caracteres y un string vacio: '%s'\n", strConcatenate(strDuplicate("ANA"), strDuplicate("")));
+    printf("Concat dos vacíos: '%s'\n", strConcatenate(strDuplicate(""), strDuplicate("")));
+    printf("Concat dos strings de 1 caracter: '%s'\n", strConcatenate(strDuplicate("P"), strDuplicate("A")));
+    printf("Concat dos strings de 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauti")));
+
+    return 0;
 }
