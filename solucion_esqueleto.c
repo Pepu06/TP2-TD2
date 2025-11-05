@@ -341,6 +341,22 @@ void gameBoardAddZombie(GameBoard *board, int row)
     printf("Función gameBoardAddZombie no implementada.\n");
 }
 
+void dispararArveja(int row, int col, GameBoard *board)
+{
+    for (int i = 0; i < MAX_ARVEJAS; i++)
+    {
+        if (!board->arvejas[i].activo)
+        {
+            board->arvejas[i].rect.x = GRID_OFFSET_X + (col * CELL_WIDTH) + (CELL_WIDTH / 2);
+            board->arvejas[i].rect.y = GRID_OFFSET_Y + (row * CELL_HEIGHT) + (CELL_HEIGHT / 4);
+            board->arvejas[i].rect.w = 20;
+            board->arvejas[i].rect.h = 20;
+            board->arvejas[i].activo = 1;
+            break;
+        }
+    }
+}
+
 void gameBoardUpdate(GameBoard *board)
 {
     if (!board)
@@ -349,29 +365,25 @@ void gameBoardUpdate(GameBoard *board)
     // TODO: Recorrer las listas de zombies de cada fila para moverlos y animarlos.
     for (int i = 0; i < GRID_ROWS; i++)
     {
-        ZombieNode *zombie = board->rows[i].first_zombie;
+        ZombieNode *zombieNode = board->rows[i].first_zombie;
         // recorro todos los zombies de la fila y actualizo el estado de cada uno
-        while (zombie)
+        while (zombieNode)
         {
-            if (!zombie->zombie_data.activo)
+            if (zombieNode->zombie_data.activo)
             {
-                zombie = zombie->next;
-                continue;
+                Zombie *z = &zombieNode->zombie_data;
+                float distance_per_tick = ZOMBIE_DISTANCE_PER_CYCLE / (float)(ZOMBIE_TOTAL_FRAMES * ZOMBIE_ANIMATION_SPEED);
+                z->pos_x -= distance_per_tick;
+                z->rect.x = (int)z->pos_x;
+                z->frame_timer++;
+                if (z->frame_timer >= ZOMBIE_ANIMATION_SPEED)
+                {
+                    z->frame_timer = 0;
+                    z->current_frame = (z->current_frame + 1) % ZOMBIE_TOTAL_FRAMES;
+                }
             }
 
-            Zombie *z = &zombie->zombie_data;
-            z->row = rand() % GRID_ROWS;
-            z->pos_x = SCREEN_WIDTH;
-            z->rect.x = (int)z->pos_x;
-            z->rect.y = GRID_OFFSET_Y + (z->row * CELL_HEIGHT);
-            z->rect.w = CELL_WIDTH;
-            z->rect.h = CELL_HEIGHT;
-            z->vida = 100;
-            z->activo = 1;
-            z->current_frame = 0;
-            z->frame_timer = 0;
-
-            zombie = zombie->next;
+            zombieNode = zombieNode->next;
         }
     }
     // TODO: Recorrer las listas de segmentos de cada fila para gestionar los cooldowns y animaciones de las plantas.
@@ -403,7 +415,7 @@ void gameBoardUpdate(GameBoard *board)
                         if (p->debe_disparar && p->current_frame == PEASHOOTER_SHOOT_FRAME)
                         {
                             // disparar arveja
-
+                            dispararArveja(i, segmento->start_col, board);
                             p->cooldown = 120;
                             p->debe_disparar = 0;
                         }
@@ -415,6 +427,57 @@ void gameBoardUpdate(GameBoard *board)
         }
     }
     // TODO: Actualizar la lógica de disparo, colisiones y spawn de zombies.
+
+    // logica de disparo
+    for (int i = 0; i < MAX_ARVEJAS; i++)
+    {
+        if (board->arvejas[i].activo)
+        {
+            board->arvejas[i].rect.x += PEA_SPEED;
+            if (board->arvejas[i].rect.x > SCREEN_WIDTH)
+                board->arvejas[i].activo = 0;
+        }
+    }
+
+    // logica de colision
+    for (int i = 0; i < GRID_ROWS; i++)
+    {
+        ZombieNode *zombieNode = board->rows[i].first_zombie;
+
+        while (zombieNode)
+        {
+            if (!zombieNode->zombie_data.activo)
+            {
+                zombieNode = zombieNode->next;
+                continue;
+            }
+            for (int j = 0; j < MAX_ARVEJAS; j++)
+            {
+                if (!board->arvejas[j].activo)
+                    continue;
+                int arveja_row = (board->arvejas[j].rect.y - GRID_OFFSET_Y) / CELL_HEIGHT;
+                if (zombieNode->zombie_data.row == arveja_row)
+                {
+                    if (SDL_HasIntersection(&board->arvejas[j].rect, &zombieNode->zombie_data.rect))
+                    {
+                        board->arvejas[j].activo = 0;
+                        zombieNode->zombie_data.vida -= 25;
+                        if (zombieNode->zombie_data.vida <= 0)
+                            zombieNode->zombie_data.activo = 0;
+                    }
+                }
+            }
+            zombieNode = zombieNode->next;
+        }
+    }
+
+    // logica de spawn
+    board->zombie_spawn_timer--;
+    if (board->zombie_spawn_timer <= 0)
+    {
+        gameBoardAddZombie(board, rand() % GRID_ROWS);
+        board->zombie_spawn_timer = ZOMBIE_SPAWN_RATE;
+    }
 }
 
 void gameBoardDraw(GameBoard *board)
@@ -511,59 +574,6 @@ void cerrar()
     IMG_Quit();
     SDL_Quit();
 }
-
-int main(int argc, char *args[])
-{
-    srand(time(NULL));
-    if (!inicializar())
-        return 1;
-
-    game_board = gameBoardNew();
-
-    SDL_Event e;
-    int game_over = 0;
-
-    while (!game_over)
-    {
-        while (SDL_PollEvent(&e) != 0)
-        {
-            if (e.type == SDL_QUIT)
-                game_over = 1;
-            if (e.type == SDL_MOUSEMOTION)
-            {
-                int mouse_x = e.motion.x;
-                int mouse_y = e.motion.y;
-                if (mouse_x >= GRID_OFFSET_X && mouse_x < GRID_OFFSET_X + GRID_WIDTH &&
-                    mouse_y >= GRID_OFFSET_Y && mouse_y < GRID_OFFSET_Y + GRID_HEIGHT)
-                {
-                    cursor.col = (mouse_x - GRID_OFFSET_X) / CELL_WIDTH;
-                    cursor.row = (mouse_y - GRID_OFFSET_Y) / CELL_HEIGHT;
-                }
-            }
-            if (e.type == SDL_MOUSEBUTTONDOWN)
-            {
-                gameBoardAddPlant(game_board, cursor.row, cursor.col);
-            }
-        }
-
-        gameBoardUpdate(game_board);
-        gameBoardDraw(game_board);
-
-        // TODO: Agregar la lógica para ver si un zombie llegó a la casa y terminó el juego
-
-        SDL_Delay(16);
-    }
-
-    gameBoardDelete(game_board);
-    cerrar();
-
-    casos_test();
-    return 0;
-}
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
 // Duplica un string. Debe contar la cantidad de caracteres totales de src y solicitar la memoria equivalente. Luego, debe copiar todos los caracteres a esta nueva ´area de memoria. Adem´as, como valor de retorno se debe retornar el puntero al nuevo string.
 char *strDuplicate(char *src)
@@ -665,5 +675,77 @@ int casos_test()
     printf("Concat dos strings de 1 caracter: '%s'\n", strConcatenate(strDuplicate("P"), strDuplicate("A")));
     printf("Concat dos strings de 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauti")));
 
+    return 0;
+}
+
+int main(int argc, char *args[])
+{
+    srand(time(NULL));
+    if (!inicializar())
+        return 1;
+
+    game_board = gameBoardNew();
+
+    SDL_Event e;
+    int game_over = 0;
+
+    while (!game_over)
+    {
+        while (SDL_PollEvent(&e) != 0)
+        {
+            if (e.type == SDL_QUIT)
+                game_over = 1;
+            if (e.type == SDL_MOUSEMOTION)
+            {
+                int mouse_x = e.motion.x;
+                int mouse_y = e.motion.y;
+                if (mouse_x >= GRID_OFFSET_X && mouse_x < GRID_OFFSET_X + GRID_WIDTH &&
+                    mouse_y >= GRID_OFFSET_Y && mouse_y < GRID_OFFSET_Y + GRID_HEIGHT)
+                {
+                    cursor.col = (mouse_x - GRID_OFFSET_X) / CELL_WIDTH;
+                    cursor.row = (mouse_y - GRID_OFFSET_Y) / CELL_HEIGHT;
+                }
+            }
+            if (e.type == SDL_MOUSEBUTTONDOWN)
+            {
+                if (e.button.button == SDL_BUTTON_LEFT)
+                {
+                    gameBoardAddPlant(game_board, cursor.row, cursor.col);
+                }
+                else if (e.button.button == SDL_BUTTON_RIGHT)
+                {
+                    gameBoardRemovePlant(game_board, cursor.row, cursor.col);
+                }
+            }
+        }
+
+        gameBoardUpdate(game_board);
+        gameBoardDraw(game_board);
+
+        // TODO: Agregar la lógica para ver si un zombie llegó a la casa y terminó el juego
+
+        for (int i = 0; i < GRID_ROWS; i++)
+        {
+            ZombieNode *zombieNode = game_board->rows[i].first_zombie;
+            while (zombieNode)
+            {
+                if (zombieNode->zombie_data.activo && zombieNode->zombie_data.rect.x < GRID_OFFSET_X - zombieNode->zombie_data.rect.w)
+                {
+                    printf("GAME OVER - Un zombie llego a tu casa!\n");
+                    game_over = 1;
+                    break;
+                }
+                zombieNode = zombieNode->next;
+            }
+            if (game_over)
+                break;
+        }
+        SDL_Delay(16);
+    }
+
+    gameBoardDelete(game_board);
+    cerrar();
+
+    casos_test();
     return 0;
 }
