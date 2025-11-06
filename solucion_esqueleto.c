@@ -23,7 +23,6 @@
 #define PEASHOOTER_TOTAL_FRAMES 31
 #define PEASHOOTER_ANIMATION_SPEED 4
 #define PEASHOOTER_SHOOT_FRAME 18
-
 #define ZOMBIE_FRAME_WIDTH 164
 #define ZOMBIE_FRAME_HEIGHT 203
 #define ZOMBIE_TOTAL_FRAMES 90
@@ -659,22 +658,60 @@ int casos_test()
     printf("Duplicate vacío: '%s'\n", strDuplicate(""));
     printf("Duplicate A: '%s'\n", strDuplicate("A"));
     printf("Duplicate largo: '%s'\n", strDuplicate("ZXCVBNMASDFGHJKLQWERTYUIOPzxcvbnmasdfghjklqwertyuiop123456789"));
+    printf("Duplicate solo numeros: '%s'\n", strDuplicate("291206"));
 
     printf("Compare iguales: %d\n", strCompare("AAAA", "AAAA"));
+    printf("Compare iguales pero de distinta longitud: %d\n", strCompare("AAAAA", "AAAA"));
+    printf("Compare iguales pero de distinta longitud: %d\n", strCompare("AAAA", "AAAAA"));
     printf("Compare vacíos: %d\n", strCompare("", ""));
+    printf("Compare vacíos con no vacios: %d\n", strCompare("", "A"));
+    printf("Compare vacíos con no vacios: %d\n", strCompare("A", ""));
     printf("Compare dos de un solo caracter: %d\n", strCompare("A", "B"));
     printf("Compare dos de un solo caracter: %d\n", strCompare("B", "A"));
     printf("Compare iguales hasta un caracter: %d\n", strCompare("Pedro", "Pedra"));
     printf("Compare iguales hasta un caracter: %d\n", strCompare("Pedra", "Pedro"));
-    printf("Compare strings diferentes: %d\n", strCompare("Bautista", "Loisi"));
-    printf("Compare strings diferentes: %d\n", strCompare("Loisi", "Bautista"));
+    printf("Compare strings diferentes donde el mas largo va antes: %d\n", strCompare("Bautista", "Loisi"));
+    printf("Compare strings diferentes donde el mas largo va antes: %d\n", strCompare("Loisi", "Bautista"));
+    printf("Compare strings diferentes donde el mas corto va antes: %d\n", strCompare("Gonz", "Pedritooooo"));
+    printf("Compare strings diferentes donde el mas corto va antes: %d\n", strCompare("Pedritoooo", "Gonz"));
 
     printf("Concat vacio y un string de 3 caracteres: '%s'\n", strConcatenate(strDuplicate(""), strDuplicate("ANA")));
     printf("Concat 3 caracteres y un string vacio: '%s'\n", strConcatenate(strDuplicate("ANA"), strDuplicate("")));
     printf("Concat dos vacíos: '%s'\n", strConcatenate(strDuplicate(""), strDuplicate("")));
     printf("Concat dos strings de 1 caracter: '%s'\n", strConcatenate(strDuplicate("P"), strDuplicate("A")));
     printf("Concat dos strings de 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauti")));
+    printf("Concat dos strings de 5 y 9 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauticapo")));
+    printf("Concat dos strings de 9 y 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedrobobo"), strDuplicate("Bauti")));
+    
+    board = gameBoardNew();
 
+    gameBoardAddPlant(board, 1, 0); //planta al principio
+    gameBoardAddPlant(board, 1, 9); // al final
+    gameBoardAddPlant(board, 1, 5); // al medio
+    
+    for(int i = 1; i<=9; i++)
+    {
+        gameBoardAddPlant(board, 2, i); // lleno de plantas una row
+    } 
+    
+    gameBoardAddPlant(board, 3, 5); // pongo planta
+    gameBoardAddPlant(board, 3, 5); // pongo planta en lugar ocupado
+    
+    
+    gameBoardAddPlant(board, 4, 3); // pongo planta 
+    gameBoardAddPlant(board, 4, 4); // pongo planta 
+    gameBoardAddPlant(board, 4, 5); // pongo planta 
+    gameBoardRemovePlant(board, 4, 4); // borro el 4
+    gameBoardRemovePlant(board, 4, 3); // borro el 3
+    
+    gameBoardRemovePlant(board, 4, 3); // intento borrar un lugar ya borrado
+
+    for(int i = 1; i<=9; i++)
+    {
+        gameBoardAddPlant(board, 5, i); // lleno de plantas una row
+    } 
+    gameBoardRemovePlant(board, 5, 5);
+    
     return 0;
 }
 
