@@ -596,12 +596,12 @@ char *strDuplicate(char *src)
 int strCompare(char *s1, char *s2)
 {
     // pasar s1 a minusculas
-    for (i = 0; s1[i] != '\0'; i++)
+    for (int i = 0; s1[i] != '\0'; i++)
         if (s1[i] >= 'A' && s1[i] <= 'Z')
             s1[i] = s1[i] + 32;
 
     // pasar s2 a minusculas
-    for (i = 0; s2[i] != '\0'; i++)
+    for (int i = 0; s2[i] != '\0'; i++)
         if (s2[i] >= 'A' && s2[i] <= 'Z')
             s2[i] = s2[i] + 32;
 
@@ -693,10 +693,10 @@ int casos_test()
     printf("Concat dos strings de 5 y 9 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauticapo")));
     printf("Concat dos strings de 9 y 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedrobobo"), strDuplicate("Bauti")));
     
-    board = gameBoardNew();
+    GameBoard *board = gameBoardNew();
 
     gameBoardAddPlant(board, 1, 0); //planta al principio
-    gameBoardAddPlant(board, 1, 9); // al final
+    gameBoardAddPlant(board, 1, 8); // al final
     gameBoardAddPlant(board, 1, 5); // al medio
     
     for(int i = 1; i<=9; i++)
@@ -716,12 +716,13 @@ int casos_test()
     
     gameBoardRemovePlant(board, 4, 3); // intento borrar un lugar ya borrado
 
-    for(int i = 1; i<=9; i++)
+    for(int i = 1; i<9; i++)
     {
-        gameBoardAddPlant(board, 5, i); // lleno de plantas una row
+        gameBoardAddPlant(board, 0, i); // lleno de plantas una row
     } 
-    gameBoardRemovePlant(board, 5, 5);
+    gameBoardRemovePlant(board, 0, 5);
     
+    gameBoardDelete(board);
     return 0;
 }
 
