@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 // ========= CONSTANTES DEL JUEGO =========
 #define SCREEN_WIDTH 900
@@ -31,7 +32,7 @@
 
 #define MAX_ARVEJAS 100
 #define PEA_SPEED 5
-#define ZOMBIE_SPAWN_RATE 300
+#define ZOMBIE_SPAWN_RATE 3000000
 
 // ========= ESTRUCTURAS DE DATOS =========
 typedef struct
@@ -154,11 +155,11 @@ void gameBoardDelete(GameBoard *board)
         {
             // TODO: Liberar todos los RowSegment (y los planta_data si existen).
             RowSegment *proximo = segmento->next;
-            free(segmento);
             if (segmento->planta_data)
             {
                 free(segmento->planta_data);
             }
+            free(segmento);
             segmento = proximo;
         }
         // TODO: Liberar todos los ZombieNode.
@@ -172,7 +173,6 @@ void gameBoardDelete(GameBoard *board)
     }
     // TODO: Finalmente, liberar el GameBoard.
     free(board);
-    printf("Función gameBoardDelete no implementada.\n");
 }
 
 int gameBoardAddPlant(GameBoard *board, int row, int col)
@@ -190,8 +190,8 @@ int gameBoardAddPlant(GameBoard *board, int row, int col)
 
             // TODO: Crear la nueva `Planta` con memoria dinámica y asignarla al `planta_data` del nuevo segmento.
             Planta *p = (Planta *)malloc(sizeof(Planta));
-            p->rect.x = GRID_OFFSET_X + (cursor.col * CELL_WIDTH);
-            p->rect.y = GRID_OFFSET_Y + (cursor.row * CELL_HEIGHT);
+            p->rect.x = GRID_OFFSET_X + (col * CELL_WIDTH);
+            p->rect.y = GRID_OFFSET_Y + (row * CELL_HEIGHT);
             p->rect.w = CELL_WIDTH;
             p->rect.h = CELL_HEIGHT;
             p->activo = 1;
@@ -258,7 +258,6 @@ int gameBoardAddPlant(GameBoard *board, int row, int col)
         }
         segmento = proximo;
     }
-    printf("Función gameBoardAddPlant no implementada.\n");
     return 0;
 }
 
@@ -308,7 +307,6 @@ void gameBoardRemovePlant(GameBoard *board, int row, int col)
     }
 
     // TODO: Implementar la lógica de FUSIÓN con los segmentos vecinos si también son VACIO.
-    printf("Función gameBoardRemovePlant no implementada.\n");
 }
 
 void gameBoardAddZombie(GameBoard *board, int row)
@@ -319,7 +317,7 @@ void gameBoardAddZombie(GameBoard *board, int row)
     // TODO: Inicializar sus datos (posición, vida, animación, etc.).
     // creo un nuevo zombie
     Zombie *z = (Zombie *)malloc(sizeof(Zombie));
-    z->row = rand() % GRID_ROWS;
+    z->row = row;
     z->pos_x = SCREEN_WIDTH;
     z->rect.x = (int)z->pos_x;
     z->rect.y = GRID_OFFSET_Y + (z->row * CELL_HEIGHT);
@@ -337,7 +335,6 @@ void gameBoardAddZombie(GameBoard *board, int row)
     // hago que el next del nuevo zombienode sea el primero de la lista y luego pongo al nuevo primero
     nuevoZombieNode->next = board->rows[row].first_zombie;
     board->rows[row].first_zombie = nuevoZombieNode;
-    printf("Función gameBoardAddZombie no implementada.\n");
 }
 
 void dispararArveja(int row, int col, GameBoard *board)
@@ -495,14 +492,15 @@ void gameBoardDraw(GameBoard *board)
         while (segmento)
         {
             // chequeo si el segmento tiene una planta activa y la dibujo
-            if (segmento->status == STATUS_PLANTA)
+            if (segmento->status == STATUS_PLANTA && segmento->planta_data)
             {
-                if (segmento->planta_data->activo)
-                {
-                    Planta *p = segmento->planta_data;
-                    SDL_Rect src_rect = {p->current_frame * PEASHOOTER_FRAME_WIDTH, 0, PEASHOOTER_FRAME_WIDTH, PEASHOOTER_FRAME_HEIGHT};
-                    SDL_RenderCopy(renderer, tex_peashooter_sheet, &src_rect, &p->rect);
-                }
+                Planta *p = segmento->planta_data;
+                int frame = p->current_frame % PEASHOOTER_TOTAL_FRAMES;
+
+                SDL_Rect src_rect = {frame * PEASHOOTER_FRAME_WIDTH, 0,
+                                     PEASHOOTER_FRAME_WIDTH, PEASHOOTER_FRAME_HEIGHT};
+
+                SDL_RenderCopy(renderer, tex_peashooter_sheet, &src_rect, &p->rect);
             }
             segmento = segmento->next;
         }
@@ -595,16 +593,6 @@ char *strDuplicate(char *src)
 // Compara dos strings lexicograficamente. Devuelve 0 si son iguales, 1 si el primer string es menor al segundo, -1 en otro caso.
 int strCompare(char *s1, char *s2)
 {
-    // pasar s1 a minusculas
-    for (int i = 0; s1[i] != '\0'; i++)
-        if (s1[i] >= 'A' && s1[i] <= 'Z')
-            s1[i] = s1[i] + 32;
-
-    // pasar s2 a minusculas
-    for (int i = 0; s2[i] != '\0'; i++)
-        if (s2[i] >= 'A' && s2[i] <= 'Z')
-            s2[i] = s2[i] + 32;
-
     int i = 0;
     while (s1[i] != '\0' && s2[i] != '\0') // se fija letra por letra si hay alguna menor lexicograficamente antes de que se terminen los strings para devolver el valor correspondiente
     {
@@ -663,7 +651,7 @@ char *strConcatenate(char *src1, char *src2)
     return ret;
 }
 
-int casos_test()
+int casos_test(GameBoard *board)
 {
     printf("Duplicate vacío: '%s'\n", strDuplicate(""));
     printf("Duplicate A: '%s'\n", strDuplicate("A"));
@@ -692,37 +680,38 @@ int casos_test()
     printf("Concat dos strings de 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauti")));
     printf("Concat dos strings de 5 y 9 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauticapo")));
     printf("Concat dos strings de 9 y 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedrobobo"), strDuplicate("Bauti")));
-    
-    GameBoard *board = gameBoardNew();
 
-    gameBoardAddPlant(board, 1, 0); //planta al principio
+    gameBoardAddPlant(board, 0, 0); // planta al principio
     gameBoardAddPlant(board, 1, 8); // al final
     gameBoardAddPlant(board, 1, 5); // al medio
-    
-    for(int i = 1; i<=9; i++)
+    for (int i = 0; i <= 9; i++)
     {
         gameBoardAddPlant(board, 2, i); // lleno de plantas una row
-    } 
-    
+    }
     gameBoardAddPlant(board, 3, 5); // pongo planta
     gameBoardAddPlant(board, 3, 5); // pongo planta en lugar ocupado
-    
-    
-    gameBoardAddPlant(board, 4, 3); // pongo planta 
-    gameBoardAddPlant(board, 4, 4); // pongo planta 
-    gameBoardAddPlant(board, 4, 5); // pongo planta 
+
+    gameBoardAddPlant(board, 4, 3);    // pongo planta
+    gameBoardAddPlant(board, 4, 4);    // pongo planta
+    gameBoardAddPlant(board, 4, 5);    // pongo planta
     gameBoardRemovePlant(board, 4, 4); // borro el 4
     gameBoardRemovePlant(board, 4, 3); // borro el 3
-    
-    gameBoardRemovePlant(board, 4, 3); // intento borrar un lugar ya borrado
-
-    for(int i = 1; i<9; i++)
+    for (int i = 0; i <= 9; i++)
     {
-        gameBoardAddPlant(board, 0, i); // lleno de plantas una row
-    } 
-    gameBoardRemovePlant(board, 0, 5);
-    
-    gameBoardDelete(board);
+        gameBoardAddPlant(board, 3, i); // lleno de plantas una row
+    }
+    gameBoardRemovePlant(board, 3, 0); // borro el 0
+
+    for (int i = 0; i < 3; i++)
+    {
+        gameBoardAddZombie(board, 0); // agrego 3 zombies a una fila
+    }
+    gameBoardAddZombie(board, 0); // Agrego un zombie adicional a la fila 0
+
+    for (int i = 0; i < 10000; i++)
+    {
+        gameBoardAddZombie(board, 3); // agrego 3 zombies a una fila
+    }
     return 0;
 }
 
@@ -733,6 +722,7 @@ int main(int argc, char *args[])
         return 1;
 
     game_board = gameBoardNew();
+    casos_test(game_board);
 
     SDL_Event e;
     int game_over = 0;
@@ -794,6 +784,5 @@ int main(int argc, char *args[])
     gameBoardDelete(game_board);
     cerrar();
 
-    casos_test();
     return 0;
 }
