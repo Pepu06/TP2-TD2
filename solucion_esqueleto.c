@@ -32,7 +32,7 @@
 
 #define MAX_ARVEJAS 100
 #define PEA_SPEED 5
-#define ZOMBIE_SPAWN_RATE 3000000
+#define ZOMBIE_SPAWN_RATE 300
 
 // ========= ESTRUCTURAS DE DATOS =========
 typedef struct
@@ -681,15 +681,15 @@ int casos_test(GameBoard *board)
     printf("Concat dos strings de 5 y 9 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedro"), strDuplicate("Bauticapo")));
     printf("Concat dos strings de 9 y 5 caracteres: '%s'\n", strConcatenate(strDuplicate("Pedrobobo"), strDuplicate("Bauti")));
 
-    gameBoardAddPlant(board, 0, 0); // planta al principio
+    gameBoardAddPlant(board, 1, 0); // planta al principio
     gameBoardAddPlant(board, 1, 8); // al final
-    gameBoardAddPlant(board, 1, 5); // al medio
+    gameBoardAddPlant(board, 1, 4); // al medio
     for (int i = 0; i <= 9; i++)
     {
         gameBoardAddPlant(board, 2, i); // lleno de plantas una row
     }
-    gameBoardAddPlant(board, 3, 5); // pongo planta
-    gameBoardAddPlant(board, 3, 5); // pongo planta en lugar ocupado
+    gameBoardAddPlant(board, 3, 4); // pongo planta
+    gameBoardAddPlant(board, 3, 4); // pongo planta en lugar ocupado
 
     gameBoardAddPlant(board, 4, 3);    // pongo planta
     gameBoardAddPlant(board, 4, 4);    // pongo planta
@@ -698,9 +698,9 @@ int casos_test(GameBoard *board)
     gameBoardRemovePlant(board, 4, 3); // borro el 3
     for (int i = 0; i <= 9; i++)
     {
-        gameBoardAddPlant(board, 3, i); // lleno de plantas una row
+        gameBoardAddPlant(board, 0, i); // lleno de plantas una row
     }
-    gameBoardRemovePlant(board, 3, 0); // borro el 0
+    gameBoardRemovePlant(board, 0, 0); // borro el 0
 
     for (int i = 0; i < 3; i++)
     {
