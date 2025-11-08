@@ -337,6 +337,7 @@ void gameBoardAddZombie(GameBoard *board, int row)
     board->rows[row].first_zombie = nuevoZombieNode;
 }
 
+// funcion para disparar una arveja desde la planta en la posicion row,col modificada pero casi igual a la del juego base
 void dispararArveja(int row, int col, GameBoard *board)
 {
     for (int i = 0; i < MAX_ARVEJAS; i++)
@@ -362,7 +363,7 @@ void gameBoardUpdate(GameBoard *board)
     for (int i = 0; i < GRID_ROWS; i++)
     {
         ZombieNode *zombieNode = board->rows[i].first_zombie;
-        // recorro todos los zombies de la fila y actualizo el estado de cada uno
+        // recorro todos los zombies de la fila y actualizo el estado de cada uno como en juego base
         while (zombieNode)
         {
             if (zombieNode->zombie_data.activo)
@@ -389,7 +390,7 @@ void gameBoardUpdate(GameBoard *board)
         // recorro todos los segmentos
         while (segmento)
         {
-            // chequeo si el segmento tiene una planta activa y actualizo su estado
+            // chequeo si el segmento tiene una planta activa y actualizo su estado como en juego base
             if (segmento->status == STATUS_PLANTA)
             {
                 if (segmento->planta_data->activo)
@@ -424,7 +425,7 @@ void gameBoardUpdate(GameBoard *board)
     }
     // TODO: Actualizar la lógica de disparo, colisiones y spawn de zombies.
 
-    // logica de disparo
+    // logica de disparo como en juego base
     for (int i = 0; i < MAX_ARVEJAS; i++)
     {
         if (board->arvejas[i].activo)
@@ -435,7 +436,7 @@ void gameBoardUpdate(GameBoard *board)
         }
     }
 
-    // logica de colision
+    // logica de colision como en juego base
     for (int i = 0; i < GRID_ROWS; i++)
     {
         ZombieNode *zombieNode = board->rows[i].first_zombie;
@@ -575,12 +576,17 @@ void cerrar()
 // Duplica un string. Debe contar la cantidad de caracteres totales de src y solicitar la memoria equivalente. Luego, debe copiar todos los caracteres a esta nueva ´area de memoria. Adem´as, como valor de retorno se debe retornar el puntero al nuevo string.
 char *strDuplicate(char *src)
 {
+    // calculo el largo del string
     int cont = 0;
     for (int i = 0; src[i] != '\0'; i++)
     {
         cont++;
     }
+
+    // reservo memoria para el nuevo string
     char *duplica = (char *)malloc(sizeof(char) * cont + 1);
+
+    // copio el string en el nuevo espacio de memoria
     for (int i = 0; src[i] != '\0'; i++)
     {
         duplica[i] = src[i];
@@ -624,6 +630,7 @@ int strCompare(char *s1, char *s2)
 // La funci´on toma dos strings src1 y src2, y retorna un nuevo string que contiene una copia de todos los caracteres de src1 seguidos de los caracteres de src2. Adem´as, la memoria de src1 y src2 debe ser liberada.
 char *strConcatenate(char *src1, char *src2)
 {
+    // calculo el largo de ambos strings
     int largo1 = 0;
     for (int i = 0; src1[i] != '\0'; i++)
     {
@@ -634,8 +641,12 @@ char *strConcatenate(char *src1, char *src2)
     {
         largo2++;
     }
+
+    // reservo memoria para el nuevo string
     char *ret = (char *)malloc(sizeof(char) * ((largo1 + largo2) + 1));
 
+
+    // copio ambos strings en el nuevo
     int i = 0;
     for (; i < largo1; i++)
     {
@@ -646,6 +657,8 @@ char *strConcatenate(char *src1, char *src2)
         ret[largo1 + j] = src2[j];
     }
     ret[largo1 + largo2] = '\0';
+
+    // libero la memoria de los strings originales
     free(src1);
     free(src2);
     return ret;
@@ -786,3 +799,13 @@ int main(int argc, char *args[])
 
     return 0;
 }
+
+
+// Indique el porcentaje aproximado de lineas de codigo del trabajo practico que fueron realizadas con asistencia de una IA.
+        // El 10% de las lineas de codigo fueron realizadas con ayuda de la IA, principalmente en las partes relacionadas con SDL. Y al principio del tp nos ayudo a entender la logica del juego base para poder reimplementar las funciones con las nuevas estructuras de datos.
+// ¿Como verificaron que las sugerencias de la IA eran correctas?
+        // Como no tenemos idea de como funciona esta libreria, intentabamos correr el codigo para verificar si habia errores. En caso de que los hubiera, volviamos a pedirle a la IA que nos ayudara a corregirlos.
+// ¿Se enfrentaron a alguna dificultad al utilizar las herramientas de IA? ¿Como las resolvieron?
+        // No hubo muchas dificultades, ya que no utilizamos casi la IA para la resolucion de los ejercicios, sino cosas especificas de SDL y logica del juego.
+// ¿Consideran que el uso de la IA les ha permitido desarrollar habilidades de programacion en C? ¿Por que?
+        // Si, ya que al utilizar la IA para entender ciertas partes del codigo, pudimos entender mejor como funcionaba la logica del juego y como implementarla en C.
